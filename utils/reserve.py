@@ -8,34 +8,29 @@ import datetime
 from urllib3.exceptions import InsecureRequestWarning
 class reserve:
     def __init__(self, sleep_time=0.5, max_attempt=5, enable_slider=False, reserve_next_day=False):
-        # 确保这里使用正确的参数名
-        self.reserve_next_day = reserve_next_day  # 存储为实例变量
-        # ... 其他初始化代码 ...
+        # ...其他初始化代码...
+        self.reserve_next_day = reserve_next_day
     
     def get_target_date(self):
         """获取正确的目标预约日期"""
-        now = datetime.datetime.now()
-        # 计算北京时间 (UTC+8)
+        # 获取当前UTC时间
+        now = datetime.datetime.utcnow()
+        # 转换为北京时间 (UTC+8)
         beijing_time = now + datetime.timedelta(hours=8)
         
-        # 根据 self.reserve_next_day 计算偏移量
+        # 根据reserve_next_day计算目标日期
         if self.reserve_next_day:
             # 预约明天
-            day_offset = 1
+            target_date = beijing_time + datetime.timedelta(days=1)
         else:
             # 预约今天
-            day_offset = 0
-            
-        # 计算目标日期
-        target_date = beijing_time + datetime.timedelta(days=day_offset)
-        return target_date.date()
-    
-    # ... 其余代码 ...
+            target_date = beijing_time
+        
+        return target_date.strftime("%Y-%m-%d")
     
     def submit(self, times, roomid, seatid, action=True):
         # 获取正确的目标日期
-        target_date = self.get_target_date()
-        day_str = target_date.strftime("%Y-%m-%d")
+        day_str = self.get_target_date()
         
         # 构建请求参数
         params = {
@@ -44,11 +39,9 @@ class reserve:
             'endTime': times[1],
             'day': day_str,
             'seatNum': seatid,
-            # ... 其他参数 ...
+            # ...其他参数...
         }
-        
         # 发送请求...
-        # ...
 
 def get_target_date(self):
     """获取正确的目标预约日期"""
