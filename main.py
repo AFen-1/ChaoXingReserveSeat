@@ -11,7 +11,7 @@ get_current_time = lambda action: time.strftime("%H:%M:%S", time.localtime(time.
 get_current_dayofweek = lambda action: time.strftime("%A", time.localtime(time.time() + 8*3600)) if action else time.strftime("%A", time.localtime(time.time()))
 
 SLEEPTIME = 0.2
-ENDTIME = "07:01:00"
+ENDTIME = "18:46:00"
 ENABLE_SLIDER = True
 MAX_ATTEMPT = 2
 RESERVE_TOMORROW = True  # 使用正确的变量名
