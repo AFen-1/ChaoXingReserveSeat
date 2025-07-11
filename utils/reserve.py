@@ -5,70 +5,91 @@ import re
 import time
 import logging
 import datetime
+import pytz
 from urllib3.exceptions import InsecureRequestWarning
+
 class reserve:
-    def __init__(self, sleep_time=0.5, max_attempt=5, enable_slider=False, reserve_next_day=False):
-        # ...其他初始化代码...
+    def __init__(self, sleep_time=0.2, max_attempt=50, enable_slider=False, reserve_next_day=False):
+        # ...其他代码不变...
         self.reserve_next_day = reserve_next_day
+        self.beijing_tz = pytz.timezone('Asia/Shanghai')  # 添加时区对象
     
     def get_target_date(self):
-        """获取正确的目标预约日期"""
-        # 获取当前UTC时间
-        now = datetime.datetime.utcnow()
-        # 转换为北京时间 (UTC+8)
-        beijing_time = now + datetime.timedelta(hours=8)
+        """获取正确的目标预约日期（北京时间）"""
+        # 获取当前北京时间
+        now = datetime.datetime.now(self.beijing_tz)
         
         # 根据reserve_next_day计算目标日期
         if self.reserve_next_day:
             # 预约明天
-            target_date = beijing_time + datetime.timedelta(days=1)
+            target_date = now + datetime.timedelta(days=1)
         else:
             # 预约今天
-            target_date = beijing_time
+            target_date = now
+        
+        # 检查是否是有效预约日
+        if target_date.hour >= 22:  # 晚上10点后不能预约当天
+            logging.warning("当前时间过晚，自动改为预约明天")
+            target_date = target_date + datetime.timedelta(days=1)
         
         return target_date.strftime("%Y-%m-%d")
     
-    def submit(self, times, roomid, seatid, action=True):
+    # 删除多余的 get_target_date 方法
+    
+    def submit(self, times, roomid, seatid, action):
         # 获取正确的目标日期
         day_str = self.get_target_date()
+        logging.info(f"预约日期: {day_str}")
         
-        # 构建请求参数
-        params = {
-            'roomid': roomid,
-            'startTime': times[0],
-            'endTime': times[1],
-            'day': day_str,
-            'seatNum': seatid,
-            # ...其他参数...
-        }
-        # 发送请求...
-def get_target_date(self):
-    """获取正确的目标预约日期"""
-    now = datetime.datetime.now()
-    # 计算北京时间 (UTC+8)
-    beijing_time = now + datetime.timedelta(hours=8)
-    
-    # 根据 RESERVE_NEXT_DAY 计算偏移量
-    if self.reserve_next_day:
-        # 预约明天
-        day_offset = 1
-    else:
-        # 预约今天
-        day_offset = 0
+        for seat in seatid:
+            suc = False
+            attempt_count = 0
+            
+            while not suc and attempt_count < self.max_attempt:
+                token = self._get_page_token(self.url.format(roomid, seat))
+                logging.info(f"Get token: {token}")
+                
+                captcha = self.resolve_captcha() if self.enable_slider else ""
+                logging.info(f"Captcha token {captcha}")
+                
+                parm = {
+                    "roomId": roomid,
+                    "startTime": times[0],
+                    "endTime": times[1],
+                    "day": day_str,  # 使用统一的日期
+                    "seatNum": seat,
+                    "captcha": captcha,
+                    "token": token
+                }
+                logging.info(f"submit parameter {parm} ")
+                parm["enc"] = enc(parm)
+                
+                try:
+                    html = self.requests.post(
+                        url=self.submit_url, params=parm, verify=True).content.decode('utf-8')
+                    result = json.loads(html)
+                    logging.info(result)
+                    
+                    if result.get("success", False):
+                        logging.info(f"预约成功! 座位: {seat}")
+                        suc = True
+                        break
+                    else:
+                        msg = result.get("msg", "未知错误")
+                        logging.warning(f"预约失败: {msg}")
+                        
+                        # 如果是时段未开放错误，停止重试
+                        if "未在系统中开放" in msg:
+                            logging.error("时段未开放，停止尝试")
+                            return False
+                except Exception as e:
+                    logging.error(f"请求失败: {str(e)}")
+                
+                time.sleep(self.sleep_time)
+                attempt_count += 1
+                logging.info(f"尝试次数: {attempt_count}/{self.max_attempt}")
         
-    # 计算目标日期
-    target_date = beijing_time + datetime.timedelta(days=day_offset)
-    
-    # 检查是否是有效预约日
-    current_date = beijing_time.date()
-    if target_date.date() == current_date:
-        # 如果是预约今天，检查当前时间是否在预约时间内
-        current_hour = beijing_time.hour
-        if current_hour >= 22:  # 晚上10点后不能预约当天
-            logging.warning("当前时间过晚，无法预约今天，自动改为预约明天")
-            target_date = beijing_time + datetime.timedelta(days=1)
-    
-    return target_date.date()
+        return suc
 
 class reserve:
     def __init__(self, sleep_time=0.2, max_attempt=50, enable_slider=False, reserve_next_day=False):
