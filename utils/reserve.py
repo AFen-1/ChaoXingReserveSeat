@@ -6,22 +6,32 @@ import time
 import logging
 import datetime
 from urllib3.exceptions import InsecureRequestWarning
-# 在 utils.py 中找到处理日期的部分
-# 通常是在 submit 方法中
-def submit(self, times, roomid, seatid, action=True):
-    # 获取当前日期
-    today = datetime.datetime.now()
+import datetime
+import time
+
+def get_target_date(reserve_tomorrow):
+    """获取目标预约日期"""
+    now = datetime.datetime.now()
+    beijing_time = now + datetime.timedelta(hours=8)  # UTC+8
     
-    # 根据 RESERVE_NEXT_DAY 计算目标日期
-    if self.reserve_next_day:
+    if reserve_tomorrow:
         # 预约明天
-        target_date = today + datetime.timedelta(days=1)
+        target_date = beijing_time + datetime.timedelta(days=1)
     else:
         # 预约今天
-        target_date = today
+        target_date = beijing_time
     
-    # 格式化为字符串 "YYYY-MM-DD"
+    return target_date
+
+def submit(self, times, roomid, seatid, action=True):
+    target_date = get_target_date(self.reserve_tomorrow)
     day_str = target_date.strftime("%Y-%m-%d")
+    
+    # 检查是否是有效预约日（图书馆可能不允许预约当天）
+    today = datetime.datetime.now() + datetime.timedelta(hours=8)
+    if target_date.date() == today.date() and today.hour >= 22:
+        logging.warning("当前时间过晚，无法预约今天")
+        return False
     
     # 构建请求参数
     params = {
@@ -30,11 +40,11 @@ def submit(self, times, roomid, seatid, action=True):
         'endTime': times[1],
         'day': day_str,
         'seatNum': seatid,
-        # ... 其他参数
+        'captcha': self.captcha_result,
+        'token': self.token
     }
     
     # 发送请求...
-
 class reserve:
     def __init__(self, sleep_time=0.2, max_attempt=50, enable_slider=False, reserve_next_day=False):
         self.login_page = "https://passport2.chaoxing.com/mlogin?loginType=1&newversion=true&fid="
