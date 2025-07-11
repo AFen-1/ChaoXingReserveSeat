@@ -2,14 +2,16 @@ name: auto_Reserve
 
 on:
   schedule:
-    - cron: "32 09 * * *"  
+    - cron: "45 09 * * *"
+    # 添加时区配置
   workflow_dispatch:
   
 jobs:
   build:
     runs-on: ubuntu-latest
+    # 设置时区为北京时间
     env:
-      TZ: Asia/Shanghai  # 确保脚本内部使用北京时间
+      TZ: Asia/Shanghai
     
     steps:
       - uses: actions/checkout@v4
@@ -22,17 +24,18 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install requests pytz cryptography
-          # 移除非必要的系统依赖安装
-
-      - name: Verify execution time
+          pip install requests pytz cryptography opencv-python-headless numpy
+          
+      - name: Verify time settings
         run: |
-          echo "GitHub Actions 触发时间 (UTC): $(date -u)"
-          echo "脚本执行时间 (北京时间): $(date)"
-          python -c "import time; print(f'Python时区: {time.tzname}')"
+          echo "当前系统时间: $(date)"
+          echo "时区信息:"
+          timedatectl
+          python -c "import time; print(f'Python时间: {time.ctime()}')"
+          python -c "import datetime; print(f'北京时区时间: {datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))}')"
 
       - name: Run reservation script
         env:
           USERNAMES: ${{ secrets.USERNAMES }}
           PASSWORDS: ${{ secrets.PASSWORDS }}
-        run: python main.py -m debug --action
+        run: python main.py -m reserve --action
