@@ -42,6 +42,21 @@ class reserve:
             # ...其他参数...
         }
         # 发送请求...
+def submit(self, times, roomid, seatid, action=True):
+    # ...发送请求...
+    
+    try:
+        response = self.requests.post(url, data=params, headers=headers)
+        result = response.json()
+        
+        if "msg" in result and "所选的版本" in result["msg"]:
+            logging.warning("座位可能已被占用或时间段不可用，尝试其他座位")
+            return False
+            
+        # 其他响应处理...
+    except Exception as e:
+        logging.error(f"请求失败: {str(e)}")
+        return False
 
 def get_target_date(self):
     """获取正确的目标预约日期"""
