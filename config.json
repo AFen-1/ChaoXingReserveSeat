@@ -23,6 +23,28 @@
                     "daysofweek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
                 }
             ]
-        }
+        },
+        {
+            "username": "xxxxxxxxxx",
+            "password": "xxxxxxxxx",
+            "tasks": [
+                {
+                    "time": ["08:00", "12:30"],
+                    "roomid": "8215",
+                    "seatid": ["006"],
+                    "daysofweek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                },
+                {
+                    "time": ["13:00", "18:00"],
+                    "roomid": "8215",
+                    "seatid": ["006"],
+                    "daysofweek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                },
+                {
+                    "time": ["18:30", "22:00"],
+                    "roomid": "8215",
+                    "seatid": ["006"],
+                    "daysofweek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                }
     ]
 }
