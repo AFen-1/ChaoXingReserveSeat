@@ -15,7 +15,7 @@ ENDTIME = "07:01:00" # 根据学校的预约座位时间+1min即可
 
 ENABLE_SLIDER = True # 是否有滑块验证
 MAX_ATTEMPT = 2 # 最大尝试次数
-RESERVE_NEXT_DAY = True # 预约明天而不是今天的
+RESERVE_NEXT_DAY = False # 预约明天而不是今天的
 
 def get_user_credentials(action):
     """从环境变量获取GitHub Secrets中的凭证"""
