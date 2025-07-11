@@ -1,8 +1,8 @@
 {
     "reserve": [
         {
-            "username": "xxxxxxxxxx",
-            "password": "xxxxxxxxx",
+            "username": "用户1账号",
+            "password": "用户1密码",
             "tasks": [
                 {
                     "time": ["08:00", "12:30"],
@@ -25,8 +25,8 @@
             ]
         },
         {
-            "username": "xxxxxxxxxx",
-            "password": "xxxxxxxxx",
+            "username": "用户2账号",
+            "password": "用户2密码",
             "tasks": [
                 {
                     "time": ["08:00", "12:30"],
