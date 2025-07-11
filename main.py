@@ -102,26 +102,63 @@ def debug(users, action=False):
     logging.info(f"Global settings: \nSLEEPTIME: {SLEEPTIME}\nENDTIME: {ENDTIME}\nENABLE_SLIDER: {ENABLE_SLIDER}\nRESERVE_NEXT_DAY: {RESERVE_NEXT_DAY}")
     suc = False
     logging.info(f" Debug Mode start! , action {'on' if action else 'off'}")
+    
     if action:
         usernames, passwords = get_user_credentials(action)
+    
     current_dayofweek = get_current_dayofweek(action)
+    session_cache = {}  # 缓存已登录的会话
+    
     for index, user in enumerate(users):
-        username, password, times, roomid, seatid, daysofweek = user.values()
-        if type(seatid) == str:
-            seatid = [seatid]
+        username = user["username"]
+        password = user["password"]
+        
         if action:
-            username ,password = usernames.split(',')[index], passwords.split(',')[index]
-        if(current_dayofweek not in daysofweek):
-            logging.info("Today not set to reserve")
-            continue
-        logging.info(f"----------- {username} -- {times} -- {seatid} try -----------")
-        s = reserve(sleep_time=SLEEPTIME,  max_attempt=MAX_ATTEMPT, enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_NEXT_DAY)
-        s.get_login_status()
-        s.login(username, password)
-        s.requests.headers.update({'Host': 'office.chaoxing.com'})
-        suc = s.submit(times, roomid, seatid, action)
-        if suc:
-            return
+            # 从GitHub Secrets获取凭证
+            cred_list = usernames.split(',')
+            if index < len(cred_list):
+                username = cred_list[index]
+            else:
+                logging.error(f"Not enough usernames in secrets for index {index}")
+                continue
+            
+            cred_list = passwords.split(',')
+            if index < len(cred_list):
+                password = cred_list[index]
+            else:
+                logging.error(f"Not enough passwords in secrets for index {index}")
+                continue
+        
+        # 如果该用户尚未登录，则登录并缓存会话
+        if username not in session_cache:
+            logging.info(f"----------- {username} login -----------")
+            s = reserve(sleep_time=SLEEPTIME, max_attempt=MAX_ATTEMPT, 
+                        enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_NEXT_DAY)
+            s.get_login_status()
+            s.login(username, password)
+            s.requests.headers.update({'Host': 'office.chaoxing.com'})
+            session_cache[username] = s
+        else:
+            s = session_cache[username]
+        
+        # 处理该用户的所有任务
+        for task_index, task in enumerate(user["tasks"]):
+            times = task["time"]
+            roomid = task["roomid"]
+            seatid = task["seatid"]
+            daysofweek = task["daysofweek"]
+            
+            if type(seatid) == str:
+                seatid = [seatid]
+            
+            if current_dayofweek not in daysofweek:
+                logging.info(f"Task {task_index}: Today not set to reserve")
+                continue
+            
+            logging.info(f"----------- {username} -- Task {task_index+1}: {times} -- {seatid} try -----------")
+            suc = s.submit(times, roomid, seatid, action)
+            if suc:
+                logging.info(f"Task {task_index+1} reserved successfully!")
 
 def get_roomid(args1, args2):
     username = input("请输入用户名：")
