@@ -14,7 +14,7 @@ SLEEPTIME = 0.2
 ENDTIME = "07:01:00"
 ENABLE_SLIDER = True
 MAX_ATTEMPT = 2
-RESERVE_TOMORROW = False  # 使用正确的变量名
+RESERVE_TOMORROW = True  # 使用正确的变量名
 
 def get_user_credentials(action):
     if action:
