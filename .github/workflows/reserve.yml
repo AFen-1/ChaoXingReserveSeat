@@ -1,41 +1,33 @@
+# This is a basic workflow that is manually triggered
+
 name: auto_Reserve
 
 on:
   schedule:
-    - cron: "45 09 * * *"
-    # 添加时区配置
+    - cron: "55 09 * * *" 
   workflow_dispatch:
   
 jobs:
   build:
     runs-on: ubuntu-latest
-    # 设置时区为北京时间
-    env:
-      TZ: Asia/Shanghai
-    
     steps:
-      - uses: actions/checkout@v4
-      
+      - uses: actions/checkout@v2
+  
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v2
         with:
-          python-version: "3.11"
+          python-version: 3.11
           
-      - name: Install dependencies
+      - name: install dependency
         run: |
-          pip install --upgrade pip
-          pip install requests pytz cryptography opencv-python-headless numpy
-          
-      - name: Verify time settings
-        run: |
-          echo "当前系统时间: $(date)"
-          echo "时区信息:"
-          timedatectl
-          python -c "import time; print(f'Python时间: {time.ctime()}')"
-          python -c "import datetime; print(f'北京时区时间: {datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))}')"
+          python -m pip install --upgrade pip
+          sudo apt-get install build-essential libssl-dev libffi-dev python3-dev -y
+          # 添加 pytz 安装
+          pip install cryptography requests opencv-python numpy pytz
 
-      - name: Run reservation script
+      - name: run script
         env:
           USERNAMES: ${{ secrets.USERNAMES }}
           PASSWORDS: ${{ secrets.PASSWORDS }}
-        run: python main.py -m reserve --action
+        run: |
+          python main.py -m debug --action
