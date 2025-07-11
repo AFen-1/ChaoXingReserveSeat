@@ -5,24 +5,20 @@ import os
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-from utils import reserve  # 只导入reserve，不再导入get_user_credentials
+from utils import reserve
 
 get_current_time = lambda action: time.strftime("%H:%M:%S", time.localtime(time.time() + 8*3600)) if action else time.strftime("%H:%M:%S", time.localtime(time.time()))
 get_current_dayofweek = lambda action: time.strftime("%A", time.localtime(time.time() + 8*3600)) if action else time.strftime("%A", time.localtime(time.time()))
 
-SLEEPTIME = 0.2 # 每次抢座的间隔
-ENDTIME = "07:01:00" # 根据学校的预约座位时间+1min即可
-
-ENABLE_SLIDER = True # 是否有滑块验证
-MAX_ATTEMPT = 2 # 最大尝试次数
-# 修正后的变量名（注意拼写）
-RESERVE_TOMORROW = False  # True: 预约明天, False: 预约今天
+SLEEPTIME = 0.2
+ENDTIME = "07:01:00"
+ENABLE_SLIDER = True
+MAX_ATTEMPT = 2
+RESERVE_TOMORROW = False  # 使用正确的变量名
 
 def get_user_credentials(action):
-    """从环境变量获取GitHub Secrets中的凭证"""
     if action:
         try:
-            # 从环境变量获取 GitHub Secrets
             usernames = os.environ['USERNAMES']
             passwords = os.environ['PASSWORDS']
             return usernames, passwords
@@ -31,26 +27,25 @@ def get_user_credentials(action):
             return "", ""
     return "", ""
 
-# ... 其余代码保持不变 ...
 def login_and_reserve(users, usernames, passwords, action, success_list=None):
-    logging.info(f"Global settings: \nSLEEPTIME: {SLEEPTIME}\nENDTIME: {ENDTIME}\nENABLE_SLIDER: {ENABLE_SLIDER}\nRESERVE_NEXT_DAY: {RESERVE_NEXT_DAY}")
+    # 修复日志输出中的变量名
+    logging.info(f"Global settings: \nSLEEPTIME: {SLEEPTIME}\nENDTIME: {ENDTIME}\nENABLE_SLIDER: {ENABLE_SLIDER}\nRESERVE_TOMORROW: {RESERVE_TOMORROW}")
+    
     if action and len(usernames.split(",")) != len(users):
         raise Exception("user number should match the number of config")
     if success_list is None:
-        # 计算总任务数
         total_tasks = sum(len(user["tasks"]) for user in users)
         success_list = [False] * total_tasks
         
     current_dayofweek = get_current_dayofweek(action)
-    session_cache = {}  # 缓存已登录的会话
-    task_index = 0  # 全局任务索引
+    session_cache = {}
+    task_index = 0
     
     for index, user in enumerate(users):
         username = user["username"]
         password = user["password"]
         
         if action:
-            # 从GitHub Secrets获取凭证
             cred_list = usernames.split(',')
             if index < len(cred_list):
                 username = cred_list[index]
@@ -65,11 +60,10 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
                 logging.error(f"Not enough passwords in secrets for index {index}")
                 continue
             
-        # 如果该用户尚未登录，则登录并缓存会话
         if username not in session_cache:
             logging.info(f"----------- {username} login -----------")
             s = reserve(sleep_time=SLEEPTIME, max_attempt=MAX_ATTEMPT, 
-                        enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_NEXT_DAY)
+                        enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_TOMORROW)
             s.get_login_status()
             s.login(username, password)
             s.requests.headers.update({'Host': 'office.chaoxing.com'})
@@ -77,7 +71,6 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
         else:
             s = session_cache[username]
             
-        # 处理该用户的所有任务
         for task in user["tasks"]:
             times = task["time"]
             roomid = task["roomid"]
@@ -106,7 +99,6 @@ def main(users, action=False):
     if action:
         usernames, passwords = get_user_credentials(action)
         
-    # 计算总任务数
     total_tasks = sum(len(user["tasks"]) for user in users)
     success_list = None
     
@@ -116,27 +108,26 @@ def main(users, action=False):
         print(f"attempt time {attempt_times}, time now {current_time}, success list {success_list}")
         current_time = get_current_time(action)
         
-        # 检查所有任务是否都成功
         if sum(success_list) == total_tasks:
             print(f"All tasks reserved successfully!")
             return
 
 def debug(users, action=False):
-    logging.info(f"Global settings: \nSLEEPTIME: {SLEEPTIME}\nENDTIME: {ENDTIME}\nENABLE_SLIDER: {ENABLE_SLIDER}\nRESERVE_NEXT_DAY: {RESERVE_NEXT_DAY}")
+    # 修复日志输出中的变量名
+    logging.info(f"Global settings: \nSLEEPTIME: {SLEEPTIME}\nENDTIME: {ENDTIME}\nENABLE_SLIDER: {ENABLE_SLIDER}\nRESERVE_TOMORROW: {RESERVE_TOMORROW}")
     logging.info(f" Debug Mode start! , action {'on' if action else 'off'}")
     
     if action:
         usernames, passwords = get_user_credentials(action)
     
     current_dayofweek = get_current_dayofweek(action)
-    session_cache = {}  # 缓存已登录的会话
+    session_cache = {}
     
     for index, user in enumerate(users):
         username = user["username"]
         password = user["password"]
         
         if action:
-            # 从GitHub Secrets获取凭证
             cred_list = usernames.split(',')
             if index < len(cred_list):
                 username = cred_list[index]
@@ -151,11 +142,10 @@ def debug(users, action=False):
                 logging.error(f"Not enough passwords in secrets for index {index}")
                 continue
         
-        # 如果该用户尚未登录，则登录并缓存会话
         if username not in session_cache:
             logging.info(f"----------- {username} login -----------")
             s = reserve(sleep_time=SLEEPTIME, max_attempt=MAX_ATTEMPT, 
-                        enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_NEXT_DAY)
+                        enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_TOMORROW)
             s.get_login_status()
             s.login(username, password)
             s.requests.headers.update({'Host': 'office.chaoxing.com'})
@@ -163,7 +153,6 @@ def debug(users, action=False):
         else:
             s = session_cache[username]
         
-        # 处理该用户的所有任务
         for task_index, task in enumerate(user["tasks"]):
             times = task["time"]
             roomid = task["roomid"]
@@ -185,7 +174,7 @@ def debug(users, action=False):
 def get_roomid(args1, args2):
     username = input("请输入用户名：")
     password = input("请输入密码：")
-    s = reserve(sleep_time=SLEEPTIME, max_attempt=MAX_ATTEMPT, enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_NEXT_DAY)
+    s = reserve(sleep_time=SLEEPTIME, max_attempt=MAX_ATTEMPT, enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_TOMORROW)
     s.get_login_status()
     s.login(username=username, password=password)
     s.requests.headers.update({'Host': 'office.chaoxing.com'})
