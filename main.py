@@ -5,7 +5,7 @@ import os
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-from utils import reserve  # 只导入reserve，get_user_credentials现在在main.py中定义
+from utils import reserve  # 只导入reserve，不再导入get_user_credentials
 
 get_current_time = lambda action: time.strftime("%H:%M:%S", time.localtime(time.time() + 8*3600)) if action else time.strftime("%H:%M:%S", time.localtime(time.time()))
 get_current_dayofweek = lambda action: time.strftime("%A", time.localtime(time.time() + 8*3600)) if action else time.strftime("%A", time.localtime(time.time()))
@@ -15,15 +15,8 @@ ENDTIME = "07:01:00" # 根据学校的预约座位时间+1min即可
 
 ENABLE_SLIDER = True # 是否有滑块验证
 MAX_ATTEMPT = 2 # 最大尝试次数
-RESERVE_NEXT_DAY = False # 预约明天而不是今天的
-
-# 实例化 reserve 类时传递正确的参数
-s = reserve(
-    sleep_time=SLEEPTIME,
-    max_attempt=MAX_ATTEMPT,
-    enable_slider=ENABLE_SLIDER,
-    reserve_next_day=RESERVE_TOMORROW  # 传递重命名后的变量
-)
+# 修正后的变量名（注意拼写）
+RESERVE_TOMORROW = False  # True: 预约明天, False: 预约今天
 
 def get_user_credentials(action):
     """从环境变量获取GitHub Secrets中的凭证"""
@@ -38,6 +31,7 @@ def get_user_credentials(action):
             return "", ""
     return "", ""
 
+# ... 其余代码保持不变 ...
 def login_and_reserve(users, usernames, passwords, action, success_list=None):
     logging.info(f"Global settings: \nSLEEPTIME: {SLEEPTIME}\nENDTIME: {ENDTIME}\nENABLE_SLIDER: {ENABLE_SLIDER}\nRESERVE_NEXT_DAY: {RESERVE_NEXT_DAY}")
     if action and len(usernames.split(",")) != len(users):
