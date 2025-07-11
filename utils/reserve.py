@@ -6,11 +6,34 @@ import time
 import logging
 import datetime
 from urllib3.exceptions import InsecureRequestWarning
-def get_date(day_offset: int=0):
-    today = datetime.datetime.now().date()
-    offset_day = today + datetime.timedelta(days=day_offset)
-    tomorrow = offset_day.strftime("%Y-%m-%d")
-    return tomorrow
+# 在 utils.py 中找到处理日期的部分
+# 通常是在 submit 方法中
+def submit(self, times, roomid, seatid, action=True):
+    # 获取当前日期
+    today = datetime.datetime.now()
+    
+    # 根据 RESERVE_NEXT_DAY 计算目标日期
+    if self.reserve_next_day:
+        # 预约明天
+        target_date = today + datetime.timedelta(days=1)
+    else:
+        # 预约今天
+        target_date = today
+    
+    # 格式化为字符串 "YYYY-MM-DD"
+    day_str = target_date.strftime("%Y-%m-%d")
+    
+    # 构建请求参数
+    params = {
+        'roomid': roomid,
+        'startTime': times[0],
+        'endTime': times[1],
+        'day': day_str,
+        'seatNum': seatid,
+        # ... 其他参数
+    }
+    
+    # 发送请求...
 
 class reserve:
     def __init__(self, sleep_time=0.2, max_attempt=50, enable_slider=False, reserve_next_day=False):
