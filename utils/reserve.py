@@ -9,8 +9,7 @@ import pytz
 from urllib3.exceptions import InsecureRequestWarning
 
 class reserve:
-    def __init__(self, sleep_time=0.2, max_attempt=50, enable_slider=False, reserve_next_day=False):
-        # ...其他代码不变...
+
         self.reserve_next_day = reserve_next_day
         self.beijing_tz = pytz.timezone('Asia/Shanghai')  # 添加时区对象
     
