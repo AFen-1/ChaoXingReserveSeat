@@ -1,4 +1,3 @@
-
 import json
 import time
 import argparse
@@ -6,11 +5,10 @@ import os
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+from utils import reserve  # 只导入reserve，get_user_credentials现在在main.py中定义
 
-from utils import reserve, get_user_credentials
 get_current_time = lambda action: time.strftime("%H:%M:%S", time.localtime(time.time() + 8*3600)) if action else time.strftime("%H:%M:%S", time.localtime(time.time()))
 get_current_dayofweek = lambda action: time.strftime("%A", time.localtime(time.time() + 8*3600)) if action else time.strftime("%A", time.localtime(time.time()))
-
 
 SLEEPTIME = 0.2 # 每次抢座的间隔
 ENDTIME = "07:01:00" # 根据学校的预约座位时间+1min即可
@@ -19,7 +17,18 @@ ENABLE_SLIDER = True # 是否有滑块验证
 MAX_ATTEMPT = 2 # 最大尝试次数
 RESERVE_NEXT_DAY = False # 预约明天而不是今天的
 
-                
+def get_user_credentials(action):
+    """从环境变量获取GitHub Secrets中的凭证"""
+    if action:
+        try:
+            # 从环境变量获取 GitHub Secrets
+            usernames = os.environ['USERNAMES']
+            passwords = os.environ['PASSWORDS']
+            return usernames, passwords
+        except KeyError:
+            logging.error("Missing USERNAMES or PASSWORDS in environment variables")
+            return "", ""
+    return "", ""
 
 def login_and_reserve(users, usernames, passwords, action, success_list=None):
     logging.info(f"Global settings: \nSLEEPTIME: {SLEEPTIME}\nENDTIME: {ENDTIME}\nENABLE_SLIDER: {ENABLE_SLIDER}\nRESERVE_NEXT_DAY: {RESERVE_NEXT_DAY}")
@@ -39,7 +48,20 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
         password = user["password"]
         
         if action:
-            username, password = usernames.split(',')[index], passwords.split(',')[index]
+            # 从GitHub Secrets获取凭证
+            cred_list = usernames.split(',')
+            if index < len(cred_list):
+                username = cred_list[index]
+            else:
+                logging.error(f"Not enough usernames in secrets for index {index}")
+                continue
+            
+            cred_list = passwords.split(',')
+            if index < len(cred_list):
+                password = cred_list[index]
+            else:
+                logging.error(f"Not enough passwords in secrets for index {index}")
+                continue
             
         # 如果该用户尚未登录，则登录并缓存会话
         if username not in session_cache:
@@ -74,7 +96,6 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
             
     return success_list
 
-
 def main(users, action=False):
     current_time = get_current_time(action)
     logging.info(f"start time {current_time}, action {'on' if action else 'off'}")
@@ -100,7 +121,6 @@ def main(users, action=False):
 
 def debug(users, action=False):
     logging.info(f"Global settings: \nSLEEPTIME: {SLEEPTIME}\nENDTIME: {ENDTIME}\nENABLE_SLIDER: {ENABLE_SLIDER}\nRESERVE_NEXT_DAY: {RESERVE_NEXT_DAY}")
-    suc = False
     logging.info(f" Debug Mode start! , action {'on' if action else 'off'}")
     
     if action:
@@ -169,7 +189,6 @@ def get_roomid(args1, args2):
     s.requests.headers.update({'Host': 'office.chaoxing.com'})
     encode = input("请输入deptldEnc：")
     s.roomid(encode)
-
 
 if __name__ == "__main__":
     config_path = os.path.join(os.path.dirname(__file__), 'config.json')
