@@ -6,11 +6,74 @@ import time
 import logging
 import datetime
 from urllib3.exceptions import InsecureRequestWarning
-def get_date(day_offset: int=0):
-    today = datetime.datetime.now().date()
-    offset_day = today + datetime.timedelta(days=day_offset)
-    tomorrow = offset_day.strftime("%Y-%m-%d")
-    return tomorrow
+class reserve:
+    def __init__(self, sleep_time=0.5, max_attempt=5, enable_slider=False, reserve_next_day=False):
+        # ... 其他初始化代码 ...
+        self.reserve_next_day = reserve_next_day
+    
+    def get_target_date(self):
+        """获取正确的目标预约日期"""
+        now = datetime.datetime.now()
+        # 计算北京时间 (UTC+8)
+        beijing_time = now + datetime.timedelta(hours=8)
+        
+        # 根据 RESERVE_NEXT_DAY 计算偏移量
+        if self.reserve_next_day:
+            # 预约明天
+            day_offset = 1
+        else:
+            # 预约今天
+            day_offset = 0
+            
+        # 计算目标日期
+        target_date = beijing_time + datetime.timedelta(days=day_offset)
+        return target_date.date()
+    
+    def submit(self, times, roomid, seatid, action=True):
+        # 获取正确的目标日期
+        target_date = self.get_target_date()
+        day_str = target_date.strftime("%Y-%m-%d")
+        
+        # 构建请求参数
+        params = {
+            'roomid': roomid,
+            'startTime': times[0],
+            'endTime': times[1],
+            'day': day_str,
+            'seatNum': seatid,
+            # ... 其他参数 ...
+        }
+        
+        # 发送请求...
+        # ...
+
+def get_target_date(self):
+    """获取正确的目标预约日期"""
+    now = datetime.datetime.now()
+    # 计算北京时间 (UTC+8)
+    beijing_time = now + datetime.timedelta(hours=8)
+    
+    # 根据 RESERVE_NEXT_DAY 计算偏移量
+    if self.reserve_next_day:
+        # 预约明天
+        day_offset = 1
+    else:
+        # 预约今天
+        day_offset = 0
+        
+    # 计算目标日期
+    target_date = beijing_time + datetime.timedelta(days=day_offset)
+    
+    # 检查是否是有效预约日
+    current_date = beijing_time.date()
+    if target_date.date() == current_date:
+        # 如果是预约今天，检查当前时间是否在预约时间内
+        current_hour = beijing_time.hour
+        if current_hour >= 22:  # 晚上10点后不能预约当天
+            logging.warning("当前时间过晚，无法预约今天，自动改为预约明天")
+            target_date = beijing_time + datetime.timedelta(days=1)
+    
+    return target_date.date()
 
 class reserve:
     def __init__(self, sleep_time=0.2, max_attempt=50, enable_slider=False, reserve_next_day=False):
