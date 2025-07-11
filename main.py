@@ -15,8 +15,7 @@ ENDTIME = "07:01:00" # 根据学校的预约座位时间+1min即可
 
 ENABLE_SLIDER = True # 是否有滑块验证
 MAX_ATTEMPT = 2 # 最大尝试次数
-# 改为更清晰的变量名
-RESERVE_TOMORROW = True  # True: 预约明天, False: 预约今天
+RESERVE_NEXT_DAY = False # 预约明天而不是今天的
 
 # 实例化 reserve 类时传递正确的参数
 s = reserve(
