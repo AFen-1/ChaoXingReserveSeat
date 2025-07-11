@@ -46,5 +46,7 @@
                     "seatid": ["006"],
                     "daysofweek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
                 }
+            ]
+        }
     ]
 }
