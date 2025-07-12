@@ -19,9 +19,10 @@ jobs:
         with:
           python-version: 3.11
           
-- name: install dependency
-  run: |
-    pip install cryptography==38.0.4 requests opencv-python-headless numpy pytz
+
+      - name: install dependency
+        run: |
+         pip install cryptography==38.0.4 requests opencv-python-headless numpy pytz
 
       - name: run script
         env:
