@@ -50,23 +50,33 @@ class reserve:
         self.reserve_next_day = reserve_next_day
         self.beijing_tz = pytz.timezone('Asia/Shanghai')
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-def get_target_date(self):
-    # 确保使用正确的北京时间
-    now = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
+class reserve:
+    def __init__(self, sleep_time=0.2, max_attempt=50, enable_slider=False, reserve_next_day=False):
+        # ... 初始化代码保持不变 ...
+        self.beijing_tz = pytz.timezone('Asia/Shanghai')
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     
-    if self.reserve_next_day:
-        target_date = now + datetime.timedelta(days=1)
-    else:
-        target_date = now
-    
-    # 处理22:00后的特殊逻辑
-    if now.hour >= 22:
-        target_date += datetime.timedelta(days=1)
-    
-    return target_date.strftime("%Y-%m-%d")
+    # === 正确缩进的方法定义 ===
+    def get_target_date(self):
+        """获取正确的目标预约日期（北京时间）"""
+        # 获取当前北京时间
+        now = datetime.datetime.now(self.beijing_tz)
         
-
-    # login and page token
+        # 根据reserve_next_day计算目标日期
+        if self.reserve_next_day:
+            # 预约明天
+            target_date = now + datetime.timedelta(days=1)
+        else:
+            # 预约今天
+            target_date = now
+        
+        # 检查是否是有效预约日
+        if now.hour >= 22:  # 晚上10点后不能预约当天
+            logging.warning("当前时间过晚，自动改为预约明天")
+            target_date = target_date + datetime.timedelta(days=1)
+        
+        return target_date.strftime("%Y-%m-%d")
+    
     def _get_page_token(self, url):
         response = self.requests.get(url=url, verify=False)
         html = response.content.decode('utf-8')
@@ -76,35 +86,38 @@ def get_target_date(self):
     def get_login_status(self):
         self.requests.headers = self.login_headers
         self.requests.get(url=self.login_page, verify=False)
-def login(self, username, password):
-    username_enc = AES_Encrypt(username)
-    password_enc = AES_Encrypt(password)
     
-    # 调试输出加密结果
-    logging.debug(f"Encrypted username: {username_enc}")
-    logging.debug(f"Encrypted password: {password_enc}")
-    
-    parm = {
-        "fid": -1,
-        "uname": username_enc,
-        "password": password_enc,
-        "refer": "http%3A%2F%2Foffice.chaoxing.com%2Ffront%2Fthird%2Fapps%2Fseat%2Fcode",
-        "t": "true"
-    }
-    
-    response = self.requests.post(self.login_url, data=parm)
-    if 'Set-Cookie' not in response.headers:
-        logging.error("Login failed: No session cookie received")
-        return False
-    
-    # 验证登录状态
-    check_url = "https://passport2.chaoxing.com/api/login"
-    check_res = self.requests.get(check_url)
-    if "用户登录" in check_res.text:
-        logging.error("Login status verification failed")
-        return False
+    def login(self, username, password):
+        username_enc = AES_Encrypt(username)
+        password_enc = AES_Encrypt(password)
         
-    return True
+        # 调试输出加密结果
+        logging.debug(f"Encrypted username: {username_enc}")
+        logging.debug(f"Encrypted password: {password_enc}")
+        
+        parm = {
+            "fid": -1,
+            "uname": username_enc,
+            "password": password_enc,
+            "refer": "http%3A%2F%2Foffice.chaoxing.com%2Ffront%2Fthird%2Fapps%2Fseat%2Fcode",
+            "t": "true"
+        }
+        
+        response = self.requests.post(self.login_url, data=parm)
+        if 'Set-Cookie' not in response.headers:
+            logging.error("Login failed: No session cookie received")
+            return False
+        
+        # 验证登录状态
+        check_url = "https://passport2.chaoxing.com/api/login"
+        check_res = self.requests.get(check_url)
+        if "用户登录" in check_res.text:
+            logging.error("Login status verification failed")
+            return False
+            
+        return True
+    
+    # ... 其他方法保持不变 ...
 
     # extra: get roomid
     def roomid(self, encode):
