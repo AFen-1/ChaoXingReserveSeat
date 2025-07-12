@@ -71,7 +71,7 @@ class reserve:
         
         return target_date.strftime("%Y-%m-%d")
         
-        def wait_until(self, target_time_str):
+    def wait_until(self, target_time_str):
         """等待直到目标时间（北京时间）"""
         logging.info(f"等待目标时间: {target_time_str}")
         while True:
@@ -81,7 +81,7 @@ class reserve:
                 logging.info(f"达到目标时间: {current_time}")
                 break
             logging.info(f"当前时间: {current_time}, 等待目标时间: {target_time_str}")
-            time.sleep(0.5)  # 每0.5秒检查一次
+            time.sleep(0.1)  # 每0.1秒检查一次
     
     # login and page token
     def _get_page_token(self, url):
