@@ -71,10 +71,10 @@ class reserve:
         
         return target_date.strftime("%Y-%m-%d")
         
-def wait_until(target_time, action):
-    """等待直到目标时间（北京时间）"""
-    logging.info(f"等待目标时间: {target_time}")
-    target_h, target_m, target_s = map(int, target_time.split(':'))
+    def wait_until(target_time, action):
+       """等待直到目标时间（北京时间）"""
+       logging.info(f"等待目标时间: {target_time}")
+       target_h, target_m, target_s = map(int, target_time.split(':'))
     
     while True:
         current_time = get_current_time(action)
