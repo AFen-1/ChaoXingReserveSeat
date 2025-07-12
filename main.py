@@ -115,9 +115,9 @@ def main(users, action=False):
         logging.info("检测到GitHub Actions模式，执行精确时间控制")
         
         # 第一步：严格等待到北京时间21:29:00
-        logging.info("严格等待到北京时间21:55:00...")
-        wait_until("21:55:00", action)
-        logging.info("北京时间21:55:00 - 开始登录账号")
+        logging.info("严格等待到北京时间22:05:00...")
+        wait_until("22:05:00", action)
+        logging.info("北京时间22:05:00 - 开始登录账号")
         
         # 获取环境变量中的账号密码
         usernames, passwords = get_user_credentials(action)
@@ -128,9 +128,9 @@ def main(users, action=False):
         logging.info("账号登录完成")
         
         # 第二步：严格等待到北京时间21:05:00
-        logging.info("严格等待到北京时间21:56:00...")
-        wait_until("21:56:00", action)
-        logging.info("北京时间21:56:00 - 开始预约流程")
+        logging.info("严格等待到北京时间22:06:00...")
+        wait_until("22:06:00", action)
+        logging.info("北京时间22:06:00 - 开始预约流程")
     
     # 非GitHub Actions模式
     else:
