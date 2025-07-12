@@ -214,8 +214,11 @@ def login(self, username, password):
         _, _, _, max_loc = cv2.minMaxLoc(res)  
         tl = max_loc
         return tl[0]
-
     def submit(self, times, roomid, seatid, action):
+    # 新增会话状态检查
+    if not self.check_session():
+        logging.error("Session expired, re-login required")
+        return False
         # 获取正确的目标日期
         day_str = self.get_target_date()
         logging.info(f"预约日期: {day_str}")
@@ -269,3 +272,8 @@ def login(self, username, password):
                 logging.info(f"尝试次数: {attempt_count}/{self.max_attempt}")
         
         return suc
+    def check_session(self):
+    """检查会话是否有效"""
+    test_url = "https://office.chaoxing.com/data/apps/seat/mine"
+    response = self.requests.get(test_url)
+    return '未登录' not in response.text
