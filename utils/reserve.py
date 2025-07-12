@@ -117,10 +117,12 @@ class reserve:
         obj = jsons.json()
         if obj['status']:
             logging.info(f"User {username} login successfully")
-            return (True, '')
+            self.logged_in = True  # 添加登录状态标记
+            return True
         else:
-            logging.info(f"User {username} login failed. Please check you password and username! ")
-            return (False, obj['msg2'])
+            logging.error(f"User {username} login failed! Reason: {obj['msg2']}")  # 改为error级别
+            self.logged_in = False
+            return False
 
     # extra: get roomid
     def roomid(self, encode):
@@ -232,6 +234,10 @@ class reserve:
         return tl[0]
 
     def submit(self, times, roomid, seatid, action):
+        if not self.logged_in:  # 新增检查
+            logging.error("无法预约：用户未登录！")
+            return False
+
         # 获取正确的目标日期
         day_str = self.get_target_date()
         logging.info(f"预约日期: {day_str}")
