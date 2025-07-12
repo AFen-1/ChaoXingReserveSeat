@@ -7,14 +7,18 @@ import random
 from uuid import uuid1
 
 def AES_Encrypt(data):
-    key = b"u2oh6Vu^HWe4_AES"  # Convert to bytes
-    iv = b"u2oh6Vu^HWe4_AES"  # Convert to bytes
+    key = b"u2oh6Vu^HWe4_AES"
+    # 修正 IV 值为正确的初始化向量
+    iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x00\x01\x02\x03\x04\x05\x06'
+    
     padder = padding.PKCS7(128).padder()
     padded_data = padder.update(data.encode('utf-8')) + padder.finalize()
+    
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
     encryptor = cipher.encryptor()
     encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
-    enctext = base64.b64encode(encrypted_data).decode('utf-8')
+    
+    return base64.b64encode(encrypted_data).decode('utf-8')
     return enctext
     
 def resort(submit_info):
