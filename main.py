@@ -104,10 +104,15 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
 def main(users, action=False):
     current_time = get_current_time(action)
     logging.info(f"启动时间 {current_time}, 执行模式 {'开启' if action else '关闭'}")
+    attempt_times = 0
+    usernames, passwords = None, None
     
     # 在GitHub Actions中运行时
     if action:
-        # 首先等待到21:29
+        logging.info("检测到GitHub Actions模式，执行时间控制逻辑")
+        
+        # 第一步：等待到北京时间21:29
+        logging.info("等待到北京时间21:29...")
         wait_until("21:29:00", action)
         logging.info("北京时间21:29 - 开始登录账号")
         
@@ -115,24 +120,26 @@ def main(users, action=False):
         usernames, passwords = get_user_credentials(action)
         
         # 登录账号
-        success_list = login_and_reserve(users, usernames, passwords, True, None)
+        logging.info("开始账号登录流程")
+        success_list = login_and_reserve(users, usernames, passwords, action, None)
         logging.info("账号登录完成")
         
-        # 登录后等待到21:30
+        # 第二步：等待到北京时间21:30
+        logging.info("等待到北京时间21:30...")
         wait_until("21:30:00", action)
         logging.info("北京时间21:30 - 开始预约流程")
-        
-        # 重置当前时间
-        current_time = get_current_time(action)
     
     # 非GitHub Actions模式
     else:
-        usernames, passwords = "", ""
+        if action:
+            usernames, passwords = get_user_credentials(action)
+        else:
+            usernames, passwords = "", ""
         success_list = None
-    
+        
     # 原有的预约循环
-    attempt_times = 0
     total_tasks = sum(len(user["tasks"]) for user in users)
+    current_time = get_current_time(action)
     
     while current_time < ENDTIME:
         attempt_times += 1
@@ -143,6 +150,8 @@ def main(users, action=False):
         if sum(success_list) == total_tasks:
             logging.info("所有任务预约成功!")
             return
+            
+    logging.info(f"达到结束时间 {ENDTIME}，停止尝试")
 
 def debug(users, action=False):
     # 修复日志输出中的变量名
