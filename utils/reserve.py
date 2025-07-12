@@ -84,12 +84,14 @@ class reserve:
         self.requests.get(url=self.login_page, verify=False)
     
     def login(self, username, password):
+       try:
+        # 使用更可靠的加密方式
+        from .encrypt import AES_Encrypt
         username_enc = AES_Encrypt(username)
         password_enc = AES_Encrypt(password)
         
-        # 调试输出加密结果
-        logging.debug(f"Encrypted username: {username_enc}")
-        logging.debug(f"Encrypted password: {password_enc}")
+        logging.info(f"原始账号: {username}, 加密后: {username_enc}")
+        logging.info(f"原始密码: {password}, 加密后: {password_enc}")
         
         parm = {
             "fid": -1,
@@ -99,21 +101,36 @@ class reserve:
             "t": "true"
         }
         
-        response = self.requests.post(self.login_url, data=parm)
-        if 'Set-Cookie' not in response.headers:
-            logging.error("Login failed: No session cookie received")
-            return False
+        # 添加详细的请求日志
+        logging.debug(f"登录请求参数: {parm}")
+        logging.debug(f"登录请求头: {self.login_headers}")
         
-        # 验证登录状态
-        check_url = "https://passport2.chaoxing.com/api/login"
-        check_res = self.requests.get(check_url)
-        if "用户登录" in check_res.text:
-            logging.error("Login status verification failed")
+        # 发送登录请求
+        response = self.requests.post(
+            self.login_url, 
+            data=parm, 
+            headers=self.login_headers,
+            verify=False,
+            timeout=10
+        )
+        
+        # 详细检查响应
+        logging.info(f"登录响应状态码: {response.status_code}")
+        logging.debug(f"登录响应头: {response.headers}")
+        logging.debug(f"登录响应内容: {response.text[:200]}...")
+        
+        # 检查会话cookie
+        if 'Set-Cookie' in response.headers:
+            cookies = response.headers['Set-Cookie']
+            logging.info(f"获取到会话Cookie: {cookies[:50]}...")
+            return True
+        else:
+            logging.error("登录失败: 未收到会话Cookie")
             return False
             
-        return True
-    
-    # ... 其他方法保持不变 ...
+        except Exception as e:
+        logging.error(f"登录过程中发生异常: {str(e)}")
+        return False
 
     # extra: get roomid
     def roomid(self, encode):
