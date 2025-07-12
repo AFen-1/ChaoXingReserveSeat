@@ -88,7 +88,7 @@ class reserve:
         self.requests.headers = self.login_headers
         self.requests.get(url=self.login_page, verify=False)
     
-     def login(self, username, password):
+    def login(self, username, password):
         try:
             # 使用更可靠的加密方式
             from .encrypt import AES_Encrypt
