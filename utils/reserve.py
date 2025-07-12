@@ -67,11 +67,11 @@ class reserve:
                 return (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
             else:
                 return now.strftime("%Y-%m-%d")
-            
-    except Exception as e:
-        logging.error(f"时间处理错误: {str(e)}")
-        # 默认返回今天日期
-        return datetime.datetime.now().strftime("%Y-%m-%d")
+                    
+        except Exception as e:
+            logging.error(f"时间处理错误: {str(e)}")
+            # 默认返回今天日期
+            return datetime.datetime.now().strftime("%Y-%m-%d")
             
         except Exception as e:
         logging.error(f"时间处理错误: {str(e)}")
