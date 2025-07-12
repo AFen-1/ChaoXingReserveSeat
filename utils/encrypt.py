@@ -5,22 +5,17 @@ import base64
 from hashlib import md5
 import random
 from uuid import uuid1
-import os
-# 修改AES_Encrypt函数
+
 def AES_Encrypt(data):
-    # 使用固定密钥（超星官方使用固定密钥）
-    key = b'u2oh6Vu^HWe4_AES'
-    iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x00\x01\x02\x03\x04\x05\x06'
-    
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    key = b"u2oh6Vu^HWe4_AES"  # Convert to bytes
+    iv = b"u2oh6Vu^HWe4_AES"  # Convert to bytes
     padder = padding.PKCS7(128).padder()
-    
-    # 确保数据是16字节倍数
-    data = data + (16 - len(data) % 16) * chr(16 - len(data) % 16)
-    
+    padded_data = padder.update(data.encode('utf-8')) + padder.finalize()
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
     encryptor = cipher.encryptor()
-    encrypted_data = encryptor.update(data.encode()) + encryptor.finalize()
-    return base64.b64encode(encrypted_data).decode()
+    encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
+    enctext = base64.b64encode(encrypted_data).decode('utf-8')
+    return enctext
     
 def resort(submit_info):
     return {key: submit_info[key] for key in sorted(submit_info.keys())}
