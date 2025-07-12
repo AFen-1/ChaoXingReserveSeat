@@ -71,7 +71,7 @@ class reserve:
         
         return target_date.strftime("%Y-%m-%d")
         
-        def wait_until(self, target_time_str):
+     def wait_until(self, target_time_str):
         """等待直到目标时间（北京时间）"""
         logging.info(f"等待目标时间: {target_time_str}")
         while True:
