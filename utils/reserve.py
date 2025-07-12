@@ -55,18 +55,23 @@ class reserve:
     def get_target_date(self):
         """更健壮的时间处理方法"""
         try:
-        # 使用pytz确保时区准确
-        now = datetime.datetime.now(self.beijing_tz)
+            # 使用pytz确保时区准确
+            now = datetime.datetime.now(self.beijing_tz)
         
-        # 处理22:00后的特殊逻辑
-        if now.hour >= 22:
-            logging.warning("当前时间过晚，自动改为预约明天")
-            return (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+            # 处理22:00后的特殊逻辑
+            if now.hour >= 22:
+                logging.warning("当前时间过晚，自动改为预约明天")
+                return (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
         
-        if self.reserve_next_day:
-            return (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-        else:
-            return now.strftime("%Y-%m-%d")
+            if self.reserve_next_day:
+                return (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+            else:
+                return now.strftime("%Y-%m-%d")
+            
+    except Exception as e:
+        logging.error(f"时间处理错误: {str(e)}")
+        # 默认返回今天日期
+        return datetime.datetime.now().strftime("%Y-%m-%d")
             
         except Exception as e:
         logging.error(f"时间处理错误: {str(e)}")
