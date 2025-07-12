@@ -161,6 +161,8 @@ def main(users, action=False):
     total_tasks = sum(len(user["tasks"]) for user in users)
     current_time = get_current_time(action)
     
+    attempt_times = 0
+    
     while current_time < ENDTIME:
         attempt_times += 1
         success_list = login_and_reserve(users, usernames, passwords, action, success_list)
