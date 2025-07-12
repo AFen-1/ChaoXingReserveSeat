@@ -54,7 +54,7 @@ class reserve:
     
     def get_target_date(self):
         """更健壮的时间处理方法"""
-        try:
+      try:
         # 使用pytz确保时区准确
         now = datetime.datetime.now(self.beijing_tz)
         
