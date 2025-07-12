@@ -10,6 +10,17 @@ from utils import reserve
 get_current_time = lambda action: time.strftime("%H:%M:%S", time.localtime(time.time() + 8*3600)) if action else time.strftime("%H:%M:%S", time.localtime(time.time()))
 get_current_dayofweek = lambda action: time.strftime("%A", time.localtime(time.time() + 8*3600)) if action else time.strftime("%A", time.localtime(time.time()))
 
+def wait_until(target_time, action):
+    """等待直到目标时间（北京时间）"""
+    logging.info(f"等待目标时间: {target_time}")
+    while True:
+        current_time = get_current_time(action)
+        if current_time >= target_time:
+            logging.info(f"达到目标时间: {current_time}")
+            break
+        logging.info(f"当前时间: {current_time}, 等待目标时间: {target_time}")
+        time.sleep(0.5)  # 每0.5秒检查一次
+
 SLEEPTIME = 0.2
 ENDTIME = "21:31:00"
 ENABLE_SLIDER = True
@@ -93,23 +104,40 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
 
 def main(users, action=False):
     current_time = get_current_time(action)
-    logging.info(f"start time {current_time}, action {'on' if action else 'off'}")
+    logging.info(f"启动时间 {current_time}, 执行模式 {'开启' if action else '关闭'}")
     attempt_times = 0
     usernames, passwords = None, None
+    
+    # 在GitHub Actions中运行时等待到21:29
+    if action:
+        wait_until("21:29:00", action)
+    
     if action:
         usernames, passwords = get_user_credentials(action)
         
     total_tasks = sum(len(user["tasks"]) for user in users)
     success_list = None
     
+    # 登录账号
+    if action:
+        logging.info("北京时间21:29 - 开始登录账号")
+        success_list = login_and_reserve(users, usernames, passwords, action, success_list)
+        logging.info("账号登录完成")
+    
+    # 登录后等待到21:30
+    if action:
+        wait_until("21:30:00", action)
+        logging.info("北京时间21:30 - 开始预约流程")
+    
+    # 原有的预约循环
     while current_time < ENDTIME:
         attempt_times += 1
         success_list = login_and_reserve(users, usernames, passwords, action, success_list)
-        print(f"attempt time {attempt_times}, time now {current_time}, success list {success_list}")
+        logging.info(f"尝试次数 {attempt_times}, 当前时间 {current_time}, 成功列表 {success_list}")
         current_time = get_current_time(action)
         
         if sum(success_list) == total_tasks:
-            print(f"All tasks reserved successfully!")
+            logging.info("所有任务预约成功!")
             return
 
 def debug(users, action=False):
