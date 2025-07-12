@@ -32,7 +32,7 @@ def wait_until(target_time, action):
 SLEEPTIME = 0.2
 ENDTIME = "21:31:00"
 ENABLE_SLIDER = True
-MAX_ATTEMPT = 2
+MAX_ATTEMPT = 1
 RESERVE_TOMORROW = True  # 使用正确的变量名
 
 def get_user_credentials(action):
@@ -119,10 +119,10 @@ def main(users, action=False):
     if action:
         logging.info("检测到GitHub Actions模式，执行精确时间控制")
         
-        # 第一步：严格等待到北京时间21:29:00
-        logging.info("严格等待到北京时间21:29:00...")
-        wait_until("21:29:00", action)
-        logging.info("北京时间21:29:00 - 开始登录账号")
+        # 第一步：严格等待到北京时间23:10:00
+        logging.info("严格等待到北京时间23:10:00...")
+        wait_until("23:10:00", action)
+        logging.info("北京时间23:10:00 - 开始登录账号")
         
         # 获取环境变量中的账号密码
         usernames, passwords = get_user_credentials(action)
@@ -133,9 +133,9 @@ def main(users, action=False):
         logging.info("账号登录完成")
         
         # 第二步：严格等待到北京时间21:30:00
-        logging.info("严格等待到北京时间21:30:00...")
-        wait_until("21:30:00", action)
-        logging.info("北京时间21:30:00 - 开始预约流程")
+        logging.info("严格等待到北京时间23:11:00...")
+        wait_until("23:11:00", action)
+        logging.info("北京时间23:11:00 - 开始预约流程")
     
     # 非GitHub Actions模式
     else:
