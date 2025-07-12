@@ -78,16 +78,33 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
                 logging.error(f"Not enough passwords in secrets for index {index}")
                 continue
             
+
         if username not in session_cache:
             logging.info(f"----------- {username} login -----------")
             s = reserve(sleep_time=SLEEPTIME, max_attempt=MAX_ATTEMPT, 
                         enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_TOMORROW)
-            s.get_login_status()
-            s.login(username, password)
-            s.requests.headers.update({'Host': 'office.chaoxing.com'})
-            session_cache[username] = s
+            
+            # 添加调试信息
+            logging.debug(f"reserve对象方法列表: {dir(s)}")
+            logging.debug(f"是否有get_login_status: {'get_login_status' in dir(s)}")
+            
+            try:
+                s.get_login_status()
+                login_result = s.login(username, password)
+                if not login_result:
+                    logging.error(f"用户 {username} 登录失败，跳过后续任务")
+                    continue
+                    
+                s.requests.headers.update({'Host': 'office.chaoxing.com'})
+                session_cache[username] = s
+            except AttributeError as e:
+                logging.error(f"方法调用失败: {str(e)}")
+                logging.debug(f"对象实际包含的方法: {dir(s)}")
+                continue
         else:
             s = session_cache[username]
+        
+        # ... 剩余代码保持不变 ...
             
         for task in user["tasks"]:
             times = task["time"]
