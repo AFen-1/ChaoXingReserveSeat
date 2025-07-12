@@ -74,9 +74,9 @@ class reserve:
             return datetime.datetime.now().strftime("%Y-%m-%d")
             
         except Exception as e:
-        logging.error(f"时间处理错误: {str(e)}")
-        # 默认返回今天日期
-        return datetime.datetime.now().strftime("%Y-%m-%d")
+            logging.error(f"时间处理错误: {str(e)}")
+            # 默认返回今天日期
+            return datetime.datetime.now().strftime("%Y-%m-%d")
     
     def _get_page_token(self, url):
         response = self.requests.get(url=url, verify=False)
