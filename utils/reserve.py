@@ -51,91 +51,76 @@ class reserve:
         self.beijing_tz = pytz.timezone('Asia/Shanghai')
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-    
     def get_target_date(self):
-        """更健壮的时间处理方法"""
-        try:
-            # 使用pytz确保时区准确
-            now = datetime.datetime.now(self.beijing_tz)
+        """获取正确的目标预约日期（北京时间）"""
+        # 获取当前北京时间
+        now = datetime.datetime.now(self.beijing_tz)
         
-            # 处理22:00后的特殊逻辑
-            if now.hour >= 22:
-                logging.warning("当前时间过晚，自动改为预约明天")
-                return (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        # 根据reserve_next_day计算目标日期
+        if self.reserve_next_day:
+            # 预约明天
+            target_date = now + datetime.timedelta(days=1)
+        else:
+            # 预约今天
+            target_date = now
         
-            if self.reserve_next_day:
-                return (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-            else:
-                return now.strftime("%Y-%m-%d")
-                    
-        except Exception as e:
-            logging.error(f"时间处理错误: {str(e)}")
-            # 默认返回今天日期
-            return datetime.datetime.now().strftime("%Y-%m-%d")
-            
-        except Exception as e:
-            logging.error(f"时间处理错误: {str(e)}")
-            # 默认返回今天日期
-            return datetime.datetime.now().strftime("%Y-%m-%d")
+        # 检查是否是有效预约日
+        if target_date.hour >= 22:  # 晚上10点后不能预约当天
+            logging.warning("当前时间过晚，自动改为预约明天")
+            target_date = target_date + datetime.timedelta(days=1)
+        
+        return target_date.strftime("%Y-%m-%d")
+        
+    def wait_until(target_time, action):
+        """等待直到目标时间（北京时间）"""
+        logging.info(f"等待目标时间: {target_time}")
+        target_h, target_m, target_s = map(int, target_time.split(':'))
     
+        while True:
+            current_time = get_current_time(action)
+            current_h, current_m, current_s = map(int, current_time.split(':'))
+        
+            # 比较当前时间和目标时间
+            if (current_h > target_h or 
+                (current_h == target_h and current_m > target_m) or 
+                (current_h == target_h and current_m == target_m and current_s >= target_s)):
+                logging.info(f"达到目标时间: {current_time}")
+                break
+            
+            logging.info(f"当前时间: {current_time}, 等待目标时间: {target_time}")
+            time.sleep(0.5)  # 每0.5秒检查一次
+    
+    # login and page token
     def _get_page_token(self, url):
         response = self.requests.get(url=url, verify=False)
         html = response.content.decode('utf-8')
-        token = re.findall('token = \'(.*?)\'', html)[0] if len(re.findall('token = \'(.*?)\'', html)) > 0 else ""
+        token = re.findall(
+            'token: \'(.*?)\'', html)[0] if len(re.findall('token: \'(.*?)\'', html)) > 0 else ""
         return token
 
     def get_login_status(self):
         self.requests.headers = self.login_headers
-        self.requests.get(url=self.login_page, verify=False)  # 修正缩进
+        self.requests.get(url=self.login_page, verify=False)
 
-    def login(self, username, password):  # 确保这行缩进正确
-        try:
-            # 使用更可靠的加密方式
-            from .encrypt import AES_Encrypt
-            username_enc = AES_Encrypt(username)
-            password_enc = AES_Encrypt(password)
-        
-            logging.info(f"原始账号: {username}, 加密后: {username_enc}")
-            logging.info(f"原始密码: {password}, 加密后: {password_enc}")
-        
-            parm = {
-                "fid": -1,
-                "uname": username_enc,
-                "password": password_enc,
-                "refer": "http%3A%2F%2Foffice.chaoxing.com%2Ffront%2Fthird%2Fapps%2Fseat%2Fcode",
-                "t": "true"
-            }
-        
-            # 添加详细的请求日志
-            logging.debug(f"登录请求参数: {parm}")
-            logging.debug(f"登录请求头: {self.login_headers}")
-        
-            # 发送登录请求
-            response = self.requests.post(
-                self.login_url, 
-                data=parm, 
-                headers=self.login_headers,
-                verify=False,
-                timeout=10
-            )
-        
-            # 详细检查响应
-            logging.info(f"登录响应状态码: {response.status_code}")
-            logging.debug(f"登录响应头: {response.headers}")
-            logging.debug(f"登录响应内容: {response.text[:200]}...")
-        
-            # 检查会话cookie
-            if 'Set-Cookie' in response.headers:
-                cookies = response.headers['Set-Cookie']
-                logging.info(f"获取到会话Cookie: {cookies[:50]}...")
-                return True
-            else:
-                logging.error("登录失败: 未收到会话Cookie")
-                return False
-            
-        except Exception as e:
-            logging.error(f"登录过程中发生异常: {str(e)}")
-            return False
+    def login(self, username, password):
+        username = AES_Encrypt(username)
+        password = AES_Encrypt(password)
+        parm = {
+            "fid": -1,
+            "uname": username,
+            "password": password,
+            "refer": "http%3A%2F%2Foffice.chaoxing.com%2Ffront%2Fthird%2Fapps%2Fseat%2Fcode%3Fid%3D4219%26seatNum%3D380",
+            "t": True
+        }
+        jsons = self.requests.post(
+            url=self.login_url, params=parm, verify=False)
+        obj = jsons.json()
+        if obj['status']:
+            logging.info(f"User {username} login successfully")
+            return (True, '')
+        else:
+            logging.info(f"User {username} login failed. Please check you password and username! ")
+            return (False, obj['msg2'])
 
     # extra: get roomid
     def roomid(self, encode):
@@ -147,6 +132,7 @@ class reserve:
             print(info)
 
     # solve captcha 
+
     def resolve_captcha(self):
         logging.info(f"Start to resolve captcha token")
         captcha_token, bg, tp = self.get_slide_captcha_data()
@@ -206,7 +192,6 @@ class reserve:
         tp = data["imageVerificationVo"]["cutoutImage"]
         return captcha_token, bg, tp
     
-
     def x_distance(self, bg, tp):
         import numpy as np
         import cv2
@@ -245,70 +230,58 @@ class reserve:
         _, _, _, max_loc = cv2.minMaxLoc(res)  
         tl = max_loc
         return tl[0]
-# ... 前面代码保持不变 ...
 
-def submit(self, times, roomid, seatid, action):
-    # 新增会话状态检查
-    if not self.check_session():
-        logging.error("Session expired, re-login required")
-        return False
+    def submit(self, times, roomid, seatid, action):
+        # 获取正确的目标日期
+        day_str = self.get_target_date()
+        logging.info(f"预约日期: {day_str}")
         
-    # 获取正确的目标日期
-    day_str = self.get_target_date()
-    logging.info(f"预约日期: {day_str}")
-    
-    for seat in seatid:
-        suc = False
-        attempt_count = 0
-        
-        while not suc and attempt_count < self.max_attempt:
-            token = self._get_page_token(self.url.format(roomid, seat))
-            logging.info(f"Get token: {token}")
+        for seat in seatid:
+            suc = False
+            attempt_count = 0
             
-            captcha = self.resolve_captcha() if self.enable_slider else ""
-            logging.info(f"Captcha token {captcha}")
-            
-            parm = {
-                "roomId": roomid,
-                "startTime": times[0],
-                "endTime": times[1],
-                "day": day_str,
-                "seatNum": seat,
-                "captcha": captcha,
-                "token": token
-            }
-            logging.info(f"submit parameter {parm} ")
-            parm["enc"] = enc(parm)
-            
-            try:
-                html = self.requests.post(
-                    url=self.submit_url, params=parm, verify=True).content.decode('utf-8')
-                result = json.loads(html)
-                logging.info(result)
+            while not suc and attempt_count < self.max_attempt:
+                token = self._get_page_token(self.url.format(roomid, seat))
+                logging.info(f"Get token: {token}")
                 
-                if result.get("success", False):
-                    logging.info(f"预约成功! 座位: {seat}")
-                    suc = True
-                    break
-                else:
-                    msg = result.get("msg", "未知错误")
-                    logging.warning(f"预约失败: {msg}")
+                captcha = self.resolve_captcha() if self.enable_slider else ""
+                logging.info(f"Captcha token {captcha}")
+                
+                parm = {
+                    "roomId": roomid,
+                    "startTime": times[0],
+                    "endTime": times[1],
+                    "day": day_str,
+                    "seatNum": seat,
+                    "captcha": captcha,
+                    "token": token
+                }
+                logging.info(f"submit parameter {parm} ")
+                parm["enc"] = enc(parm)
+                
+                try:
+                    html = self.requests.post(
+                        url=self.submit_url, params=parm, verify=True).content.decode('utf-8')
+                    result = json.loads(html)
+                    logging.info(result)
                     
-                    # 如果是时段未开放错误，停止重试
-                    if "未在系统中开放" in msg:
-                        logging.error("时段未开放，停止尝试")
-                        return False
-            except Exception as e:
-                logging.error(f"请求失败: {str(e)}")
-            
-            time.sleep(self.sleep_time)
-            attempt_count += 1
-            logging.info(f"尝试次数: {attempt_count}/{self.max_attempt}")
-    
-    return suc
-
-def check_session(self):
-    """检查会话是否有效"""
-    test_url = "https://office.chaoxing.com/data/apps/seat/mine"
-    response = self.requests.get(test_url)
-    return '未登录' not in response.text
+                    if result.get("success", False):
+                        logging.info(f"预约成功! 座位: {seat}")
+                        suc = True
+                        break
+                    else:
+                        msg = result.get("msg", "未知错误")
+                        logging.warning(f"预约失败: {msg}")
+                        
+                        # 如果是时段未开放错误，停止重试
+                        if "未在系统中开放" in msg:
+                            logging.error("时段未开放，停止尝试")
+                            return False
+                except Exception as e:
+                    logging.error(f"请求失败: {str(e)}")
+                
+                time.sleep(self.sleep_time)
+                attempt_count += 1
+                logging.info(f"尝试次数: {attempt_count}/{self.max_attempt}")
+        
+        return suc
