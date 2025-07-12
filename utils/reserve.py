@@ -214,65 +214,69 @@ def login(self, username, password):
         _, _, _, max_loc = cv2.minMaxLoc(res)  
         tl = max_loc
         return tl[0]
-    def submit(self, times, roomid, seatid, action):
+# ... 前面代码保持不变 ...
+
+def submit(self, times, roomid, seatid, action):
     # 新增会话状态检查
     if not self.check_session():
         logging.error("Session expired, re-login required")
         return False
-        # 获取正确的目标日期
-        day_str = self.get_target_date()
-        logging.info(f"预约日期: {day_str}")
         
-        for seat in seatid:
-            suc = False
-            attempt_count = 0
+    # 获取正确的目标日期
+    day_str = self.get_target_date()
+    logging.info(f"预约日期: {day_str}")
+    
+    for seat in seatid:
+        suc = False
+        attempt_count = 0
+        
+        while not suc and attempt_count < self.max_attempt:
+            token = self._get_page_token(self.url.format(roomid, seat))
+            logging.info(f"Get token: {token}")
             
-            while not suc and attempt_count < self.max_attempt:
-                token = self._get_page_token(self.url.format(roomid, seat))
-                logging.info(f"Get token: {token}")
+            captcha = self.resolve_captcha() if self.enable_slider else ""
+            logging.info(f"Captcha token {captcha}")
+            
+            parm = {
+                "roomId": roomid,
+                "startTime": times[0],
+                "endTime": times[1],
+                "day": day_str,
+                "seatNum": seat,
+                "captcha": captcha,
+                "token": token
+            }
+            logging.info(f"submit parameter {parm} ")
+            parm["enc"] = enc(parm)
+            
+            try:
+                html = self.requests.post(
+                    url=self.submit_url, params=parm, verify=True).content.decode('utf-8')
+                result = json.loads(html)
+                logging.info(result)
                 
-                captcha = self.resolve_captcha() if self.enable_slider else ""
-                logging.info(f"Captcha token {captcha}")
-                
-                parm = {
-                    "roomId": roomid,
-                    "startTime": times[0],
-                    "endTime": times[1],
-                    "day": day_str,
-                    "seatNum": seat,
-                    "captcha": captcha,
-                    "token": token
-                }
-                logging.info(f"submit parameter {parm} ")
-                parm["enc"] = enc(parm)
-                
-                try:
-                    html = self.requests.post(
-                        url=self.submit_url, params=parm, verify=True).content.decode('utf-8')
-                    result = json.loads(html)
-                    logging.info(result)
+                if result.get("success", False):
+                    logging.info(f"预约成功! 座位: {seat}")
+                    suc = True
+                    break
+                else:
+                    msg = result.get("msg", "未知错误")
+                    logging.warning(f"预约失败: {msg}")
                     
-                    if result.get("success", False):
-                        logging.info(f"预约成功! 座位: {seat}")
-                        suc = True
-                        break
-                    else:
-                        msg = result.get("msg", "未知错误")
-                        logging.warning(f"预约失败: {msg}")
-                        
-                        # 如果是时段未开放错误，停止重试
-                        if "未在系统中开放" in msg:
-                            logging.error("时段未开放，停止尝试")
-                            return False
-                except Exception as e:
-                    logging.error(f"请求失败: {str(e)}")
-                
-                time.sleep(self.sleep_time)
-                attempt_count += 1
-                logging.info(f"尝试次数: {attempt_count}/{self.max_attempt}")
-        
-        return suc
-    def check_session(self):
+                    # 如果是时段未开放错误，停止重试
+                    if "未在系统中开放" in msg:
+                        logging.error("时段未开放，停止尝试")
+                        return False
+            except Exception as e:
+                logging.error(f"请求失败: {str(e)}")
+            
+            time.sleep(self.sleep_time)
+            attempt_count += 1
+            logging.info(f"尝试次数: {attempt_count}/{self.max_attempt}")
+    
+    return suc
+
+def check_session(self):
     """检查会话是否有效"""
     test_url = "https://office.chaoxing.com/data/apps/seat/mine"
     response = self.requests.get(test_url)
