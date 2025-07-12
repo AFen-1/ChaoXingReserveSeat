@@ -90,7 +90,7 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
                 session_cache[username] = None  # 缓存失败状态
                 continue  # 跳过当前用户
     
-            s.requests.headers.update(...)
+            s.requests.headers.update({'Host': 'office.chaoxing.com'})
             session_cache[username] = s
         else:
             s = session_cache[username]
