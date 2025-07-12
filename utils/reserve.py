@@ -50,11 +50,7 @@ class reserve:
         self.reserve_next_day = reserve_next_day
         self.beijing_tz = pytz.timezone('Asia/Shanghai')
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-class reserve:
-    def __init__(self, sleep_time=0.2, max_attempt=50, enable_slider=False, reserve_next_day=False):
-        # ... 初始化代码保持不变 ...
-        self.beijing_tz = pytz.timezone('Asia/Shanghai')
-        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
     
     # === 正确缩进的方法定义 ===
     def get_target_date(self):
