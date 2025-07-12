@@ -71,31 +71,12 @@ class reserve:
         
         return target_date.strftime("%Y-%m-%d")
         
-    def wait_until(target_time, action):
-       """等待直到目标时间（北京时间）"""
-       logging.info(f"等待目标时间: {target_time}")
-       target_h, target_m, target_s = map(int, target_time.split(':'))
-    
-    while True:
-        current_time = get_current_time(action)
-        current_h, current_m, current_s = map(int, current_time.split(':'))
-        
-        # 比较当前时间和目标时间
-        if (current_h > target_h or 
-            (current_h == target_h and current_m > target_m) or 
-            (current_h == target_h and current_m == target_m and current_s >= target_s)):
-            logging.info(f"达到目标时间: {current_time}")
-            break
-            
-        logging.info(f"当前时间: {current_time}, 等待目标时间: {target_time}")
-        time.sleep(0.5)  # 每0.5秒检查一次
-    
+
     # login and page token
     def _get_page_token(self, url):
         response = self.requests.get(url=url, verify=False)
         html = response.content.decode('utf-8')
-        token = re.findall(
-            'token: \'(.*?)\'', html)[0] if len(re.findall('token: \'(.*?)\'', html)) > 0 else ""
+        token = re.findall('token = \'(.*?)\'', html)[0] if len(re.findall('token = \'(.*?)\'', html)) > 0 else ""
         return token
 
     def get_login_status(self):
@@ -132,7 +113,6 @@ class reserve:
             print(info)
 
     # solve captcha 
-
     def resolve_captcha(self):
         logging.info(f"Start to resolve captcha token")
         captcha_token, bg, tp = self.get_slide_captcha_data()
@@ -192,6 +172,7 @@ class reserve:
         tp = data["imageVerificationVo"]["cutoutImage"]
         return captcha_token, bg, tp
     
+
     def x_distance(self, bg, tp):
         import numpy as np
         import cv2
