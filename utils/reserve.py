@@ -86,9 +86,9 @@ class reserve:
 
     def get_login_status(self):
         self.requests.headers = self.login_headers
-        self.requests.get(url=self.login_page, verify=False)
-    
-    def login(self, username, password):
+        self.requests.get(url=self.login_page, verify=False)  # 修正缩进
+
+    def login(self, username, password):  # 确保这行缩进正确
         try:
             # 使用更可靠的加密方式
             from .encrypt import AES_Encrypt
@@ -111,7 +111,7 @@ class reserve:
             logging.debug(f"登录请求头: {self.login_headers}")
         
             # 发送登录请求
-                response = self.requests.post(
+            response = self.requests.post(
                 self.login_url, 
                 data=parm, 
                 headers=self.login_headers,
@@ -136,10 +136,6 @@ class reserve:
         except Exception as e:
             logging.error(f"登录过程中发生异常: {str(e)}")
             return False
-            
-        except Exception as e:
-        logging.error(f"登录过程中发生异常: {str(e)}")
-        return False
 
     # extra: get roomid
     def roomid(self, encode):
