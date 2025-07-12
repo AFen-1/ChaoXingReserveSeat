@@ -82,26 +82,35 @@ class reserve:
     def get_login_status(self):
         self.requests.headers = self.login_headers
         self.requests.get(url=self.login_page, verify=False)
-
-    def login(self, username, password):
-        username = AES_Encrypt(username)
-        password = AES_Encrypt(password)
-        parm = {
-            "fid": -1,
-            "uname": username,
-            "password": password,
-            "refer": "http%3A%2F%2Foffice.chaoxing.com%2Ffront%2Fthird%2Fapps%2Fseat%2Fcode%3Fid%3D4219%26seatNum%3D380",
-            "t": True
-        }
-        jsons = self.requests.post(
-            url=self.login_url, params=parm, verify=False)
-        obj = jsons.json()
-        if obj['status']:
-            logging.info(f"User {username} login successfully")
-            return (True, '')
-        else:
-            logging.info(f"User {username} login failed. Please check you password and username! ")
-            return (False, obj['msg2'])
+def login(self, username, password):
+    username_enc = AES_Encrypt(username)
+    password_enc = AES_Encrypt(password)
+    
+    # 调试输出加密结果
+    logging.debug(f"Encrypted username: {username_enc}")
+    logging.debug(f"Encrypted password: {password_enc}")
+    
+    parm = {
+        "fid": -1,
+        "uname": username_enc,
+        "password": password_enc,
+        "refer": "http%3A%2F%2Foffice.chaoxing.com%2Ffront%2Fthird%2Fapps%2Fseat%2Fcode",
+        "t": "true"
+    }
+    
+    response = self.requests.post(self.login_url, data=parm)
+    if 'Set-Cookie' not in response.headers:
+        logging.error("Login failed: No session cookie received")
+        return False
+    
+    # 验证登录状态
+    check_url = "https://passport2.chaoxing.com/api/login"
+    check_res = self.requests.get(check_url)
+    if "用户登录" in check_res.text:
+        logging.error("Login status verification failed")
+        return False
+        
+    return True
 
     # extra: get roomid
     def roomid(self, encode):
