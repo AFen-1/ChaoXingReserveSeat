@@ -81,14 +81,21 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
             
         if username not in session_cache:
             logging.info(f"----------- {username} login -----------")
-            s = reserve(sleep_time=SLEEPTIME, max_attempt=MAX_ATTEMPT, 
-                        enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_TOMORROW)
+            s = reserve(...)
             s.get_login_status()
-            s.login(username, password)
-            s.requests.headers.update({'Host': 'office.chaoxing.com'})
+            login_success = s.login(username, password)  # 获取登录结果
+    
+            if not login_success:  # 登录失败处理
+                logging.error(f"用户 {username} 登录失败，跳过所有预约")
+                session_cache[username] = None  # 缓存失败状态
+                continue  # 跳过当前用户
+    
+            s.requests.headers.update(...)
             session_cache[username] = s
         else:
             s = session_cache[username]
+            if s is None:  # 检查缓存中的失败状态
+                continue  # 跳过已失败用户
             
         for task in user["tasks"]:
             times = task["time"]
