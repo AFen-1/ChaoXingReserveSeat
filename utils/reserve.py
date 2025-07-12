@@ -10,7 +10,6 @@ from urllib3.exceptions import InsecureRequestWarning
 
 class reserve:
     def __init__(self, sleep_time=0.2, max_attempt=50, enable_slider=False, reserve_next_day=False):
-        # 初始化代码保持不变
         self.login_page = "https://passport2.chaoxing.com/mlogin?loginType=1&newversion=true&fid="
         self.url = "https://office.chaoxing.com/front/third/apps/seat/code?id={}&seatNum={}"
         self.submit_url = "https://office.chaoxing.com/data/apps/seat/submit"
@@ -72,6 +71,18 @@ class reserve:
         
         return target_date.strftime("%Y-%m-%d")
         
+        def wait_until(self, target_time_str):
+        """等待直到目标时间（北京时间）"""
+        logging.info(f"等待目标时间: {target_time_str}")
+        while True:
+            now = datetime.datetime.now(self.beijing_tz)
+            current_time = now.strftime("%H:%M:%S")
+            if current_time >= target_time_str:
+                logging.info(f"达到目标时间: {current_time}")
+                break
+            logging.info(f"当前时间: {current_time}, 等待目标时间: {target_time_str}")
+            time.sleep(0.5)  # 每0.5秒检查一次
+    
     # login and page token
     def _get_page_token(self, url):
         response = self.requests.get(url=url, verify=False)
@@ -81,21 +92,10 @@ class reserve:
         return token
 
     def get_login_status(self):
-        """获取登录状态，维持会话 - 添加响应检查"""
         self.requests.headers = self.login_headers
-        try:
-            response = self.requests.get(url=self.login_page, verify=False)
-            if response.status_code == 200:
-                logging.info("成功获取登录状态")
-                return True
-            logging.error(f"获取登录状态失败: HTTP {response.status_code}")
-            return False
-        except Exception as e:
-            logging.error(f"获取登录状态异常: {str(e)}")
-            return False
+        self.requests.get(url=self.login_page, verify=False)
 
     def login(self, username, password):
-        """登录方法 - 添加错误处理"""
         username = AES_Encrypt(username)
         password = AES_Encrypt(password)
         parm = {
@@ -105,19 +105,15 @@ class reserve:
             "refer": "http%3A%2F%2Foffice.chaoxing.com%2Ffront%2Fthird%2Fapps%2Fseat%2Fcode%3Fid%3D4219%26seatNum%3D380",
             "t": True
         }
-        try:
-            response = self.requests.post(url=self.login_url, params=parm, verify=False)
-            obj = response.json()
-            if obj.get('status', False):
-                logging.info(f"用户 {username} 登录成功")
-                return True
-            else:
-                msg = obj.get('msg2', '未知错误')
-                logging.error(f"登录失败: {msg}")
-                return False
-        except Exception as e:
-            logging.error(f"登录请求失败: {str(e)}")
-            return False
+        jsons = self.requests.post(
+            url=self.login_url, params=parm, verify=False)
+        obj = jsons.json()
+        if obj['status']:
+            logging.info(f"User {username} login successfully")
+            return (True, '')
+        else:
+            logging.info(f"User {username} login failed. Please check you password and username! ")
+            return (False, obj['msg2'])
 
     # extra: get roomid
     def roomid(self, encode):
@@ -129,6 +125,7 @@ class reserve:
             print(info)
 
     # solve captcha 
+
     def resolve_captcha(self):
         logging.info(f"Start to resolve captcha token")
         captcha_token, bg, tp = self.get_slide_captcha_data()
