@@ -52,26 +52,26 @@ class reserve:
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
     
-    # === 正确缩进的方法定义 ===
     def get_target_date(self):
-        """获取正确的目标预约日期（北京时间）"""
-        # 获取当前北京时间
+        """更健壮的时间处理方法"""
+        try:
+        # 使用pytz确保时区准确
         now = datetime.datetime.now(self.beijing_tz)
         
-        # 根据reserve_next_day计算目标日期
-        if self.reserve_next_day:
-            # 预约明天
-            target_date = now + datetime.timedelta(days=1)
-        else:
-            # 预约今天
-            target_date = now
-        
-        # 检查是否是有效预约日
-        if now.hour >= 22:  # 晚上10点后不能预约当天
+        # 处理22:00后的特殊逻辑
+        if now.hour >= 22:
             logging.warning("当前时间过晚，自动改为预约明天")
-            target_date = target_date + datetime.timedelta(days=1)
+            return (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
         
-        return target_date.strftime("%Y-%m-%d")
+        if self.reserve_next_day:
+            return (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        else:
+            return now.strftime("%Y-%m-%d")
+            
+        except Exception as e:
+        logging.error(f"时间处理错误: {str(e)}")
+        # 默认返回今天日期
+        return datetime.datetime.now().strftime("%Y-%m-%d")
     
     def _get_page_token(self, url):
         response = self.requests.get(url=url, verify=False)
