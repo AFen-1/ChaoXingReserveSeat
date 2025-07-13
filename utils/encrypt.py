@@ -18,8 +18,8 @@ def AES_Encrypt(data):
     return enctext
 
 def enc(submit_info):
-    # 修复：直接使用submit_info而不调用resort
-    needed = ['[' + key + '=' + value + ']' for key, value in submit_info.items()]
+    sorted_keys = sorted(submit_info.keys())
+    needed = ['[' + key + '=' + submit_info[key] + ']' for key in sorted_keys]
     pattern = "%sd`~7^/>N4!Q#){''"
     needed.append('[' + pattern + ']')
     seq = ''.join(needed)
