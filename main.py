@@ -10,29 +10,29 @@ from utils import reserve
 get_current_time = lambda action: time.strftime("%H:%M:%S", time.localtime(time.time() + 8*3600)) if action else time.strftime("%H:%M:%S", time.localtime(time.time()))
 get_current_dayofweek = lambda action: time.strftime("%A", time.localtime(time.time() + 8*3600)) if action else time.strftime("%A", time.localtime(time.time()))
 
-
 def wait_until(target_time, action):
-    """更严格的等待函数，精确到毫秒级"""
-    logging.info(f"严格等待目标时间: {target_time}")
+    """等待直到目标时间（北京时间）"""
+    logging.info(f"等待目标时间: {target_time}")
     target_h, target_m, target_s = map(int, target_time.split(':'))
-    target_ts = target_h*3600 + target_m*60 + target_s
     
     while True:
         current_time = get_current_time(action)
         current_h, current_m, current_s = map(int, current_time.split(':'))
-        current_ts = current_h*3600 + current_m*60 + current_s
         
-        if current_ts >= target_ts:
-            logging.info(f"精确达到目标时间: {current_time}")
+        # 比较当前时间和目标时间
+        if (current_h > target_h or 
+            (current_h == target_h and current_m > target_m) or 
+            (current_h == target_h and current_m == target_m and current_s >= target_s)):
+            logging.info(f"达到目标时间: {current_time}")
             break
             
-        # 更精确的等待，每秒检查10次
-        time.sleep(0.1)
+        logging.info(f"当前时间: {current_time}, 等待目标时间: {target_time}")
+        time.sleep(0.5)  # 每0.5秒检查一次
 
 SLEEPTIME = 0.2
-ENDTIME = "22:59:00"
+ENDTIME = "21:31:00"
 ENABLE_SLIDER = True
-MAX_ATTEMPT = 1
+MAX_ATTEMPT = 2
 RESERVE_TOMORROW = True  # 使用正确的变量名
 
 def get_user_credentials(action):
@@ -84,19 +84,11 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
             s = reserve(sleep_time=SLEEPTIME, max_attempt=MAX_ATTEMPT, 
                         enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_TOMORROW)
             s.get_login_status()
-            login_success = s.login(username, password)  # 获取登录结果
-    
-            if not login_success:  # 登录失败处理
-                logging.error(f"用户 {username} 登录失败，跳过所有预约")
-                session_cache[username] = None  # 缓存失败状态
-                continue  # 跳过当前用户
-    
+            s.login(username, password)
             s.requests.headers.update({'Host': 'office.chaoxing.com'})
             session_cache[username] = s
         else:
             s = session_cache[username]
-            if s is None:  # 检查缓存中的失败状态
-                continue  # 跳过已失败用户
             
         for task in user["tasks"]:
             times = task["time"]
@@ -125,12 +117,12 @@ def main(users, action=False):
     
     # 在GitHub Actions中运行时
     if action:
-        logging.info("检测到GitHub Actions模式，执行精确时间控制")
+        logging.info("检测到GitHub Actions模式，执行时间控制逻辑")
         
-        # 第一步：严格等待到北京时间23:10:00
-        logging.info("严格等待到北京时间09:20:00...")
-        wait_until("09:20:00", action)
-        logging.info("北京时间09:20:00 - 开始登录账号")
+        # 第一步：等待到北京时间21:29
+        logging.info("等待到北京时间21:29...")
+        wait_until("21:29:00", action)
+        logging.info("北京时间21:29 - 开始登录账号")
         
         # 获取环境变量中的账号密码
         usernames, passwords = get_user_credentials(action)
@@ -140,10 +132,10 @@ def main(users, action=False):
         success_list = login_and_reserve(users, usernames, passwords, action, None)
         logging.info("账号登录完成")
         
-        # 第二步：严格等待到北京时间21:30:00
-        logging.info("严格等待到北京时间09:21:00...")
-        wait_until("09:21:00", action)
-        logging.info("北京时间09:21:00 - 开始预约流程")
+        # 第二步：等待到北京时间21:30
+        logging.info("等待到北京时间21:30...")
+        wait_until("21:30:00", action)
+        logging.info("北京时间21:30 - 开始预约流程")
     
     # 非GitHub Actions模式
     else:
