@@ -1,0 +1,35 @@
+name: auto_Reserve
+
+on:
+  schedule:
+    # 北京时间20:30运行 (UTC+8)
+    - cron: "30 12 * * *"   # UTC时间12:30 = 北京时间20:30
+      timezone: "Asia/Shanghai"
+  workflow_dispatch:  # 保留手动触发功能
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120  # 设置2小时超时防止意外终止
+    steps:
+      - uses: actions/checkout@v2
+  
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+          
+
+      - name: install dependency
+        run: |
+         pip install cryptography==38.0.4 requests opencv-python-headless numpy pytz
+
+      - name: run script
+        env:
+          USERNAMES: ${{ secrets.USERNAMES }}
+          PASSWORDS: ${{ secrets.PASSWORDS }}
+        run: |
+          # 添加时间检查确保执行时机正确
+          echo "当前UTC时间: $(date -u)"
+          echo "当前北京时间: $(TZ='Asia/Shanghai' date)"
+          python main.py -m reserve --action
