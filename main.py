@@ -81,7 +81,8 @@ def login_and_reserve(users, usernames, passwords, action, success_list=None):
             
         if username not in session_cache:
             logging.info(f"----------- {username} login -----------")
-            s = reserve(...)
+            s = reserve(sleep_time=SLEEPTIME, max_attempt=MAX_ATTEMPT, 
+                        enable_slider=ENABLE_SLIDER, reserve_next_day=RESERVE_TOMORROW)
             s.get_login_status()
             login_success = s.login(username, password)  # 获取登录结果
     
