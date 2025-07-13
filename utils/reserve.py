@@ -166,6 +166,17 @@ class reserve:
         except KeyError as e:
             logging.info("Can't load validate value. Maybe server return mistake.")
             return ""
+        
+        try: 
+            if data.get("result", False):
+                validate_val = json.loads(data["extraData"])['validate']
+                return validate_val
+            else:
+                logging.warning(f"滑块验证失败: {data.get('msg', '未知错误')}")
+                return ""
+        except Exception as e:
+            logging.error(f"解析滑块验证结果失败: {str(e)}")
+            return ""
 
     def get_slide_captcha_data(self):
         url = "https://captcha.chaoxing.com/captcha/get/verification/image"
