@@ -5,25 +5,39 @@ import base64
 from hashlib import md5
 import random
 from uuid import uuid1
+import os
 
 def AES_Encrypt(data):
-    key = b"u2oh6Vu^HWe4_AES"
-    iv = b"u2oh6Vu^HWe4_AES"
-    padder = padding.PKCS7(128).padder()
-    padded_data = padder.update(data.encode('utf-8')) + padder.finalize()
+    # 使用更标准的密钥和初始向量
+    key = os.urandom(16)  # 16字节随机密钥
+    iv = os.urandom(16)   # 16字节随机初始向量
+    
+    # 创建加密器
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
     encryptor = cipher.encryptor()
+    
+    # 添加PKCS7填充
+    padder = padding.PKCS7(128).padder()
+    padded_data = padder.update(data.encode('utf-8')) + padder.finalize()
+    
+    # 加密数据
     encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
-    enctext = base64.b64encode(encrypted_data).decode('utf-8')
-    return enctext
+    
+    # 返回Base64编码的结果
+    return base64.b64encode(encrypted_data).decode('utf-8')
+    
+def resort(submit_info):
+    return {key: submit_info[key] for key in sorted(submit_info.keys())}
 
 def enc(submit_info):
-    sorted_keys = sorted(submit_info.keys())
-    needed = ['[' + key + '=' + submit_info[key] + ']' for key in sorted_keys]
+    add = lambda x, y: x + y
+    processed_info = resort(submit_info)
+    needed = [add(add('[', key), '=' + value) + ']' for key, value in processed_info.items()]
     pattern = "%sd`~7^/>N4!Q#){''"
-    needed.append('[' + pattern + ']')
+    needed.append(add('[', pattern) + ']')
     seq = ''.join(needed)
     return md5(seq.encode("utf-8")).hexdigest()
+
 
 def generate_captcha_key(timestamp: int):
     captcha_key = md5((str(timestamp) + str(uuid1())).encode("utf-8")).hexdigest()
