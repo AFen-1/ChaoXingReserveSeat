@@ -255,6 +255,13 @@ class reserve:
         logging.info(f"预约日期: {day_str}")
         
         for seat in seatid:
+            if suc:  # 如果已成功预约一个座位
+                continue  # 跳过其他座位
+        
+            # 尝试预约当前座位
+            ...
+            if result.get("success", False):
+                suc = True  # 标记已成功
             suc = False
             attempt_count = 0
             
