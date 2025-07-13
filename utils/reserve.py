@@ -49,6 +49,7 @@ class reserve:
         self.enable_slider = enable_slider
         self.reserve_next_day = reserve_next_day
         self.beijing_tz = pytz.timezone('Asia/Shanghai')
+        self.logged_in = False
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
     def get_target_date(self):
