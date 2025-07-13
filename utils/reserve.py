@@ -66,7 +66,7 @@ class reserve:
             target_date = now
         
         # 检查是否是有效预约日
-        if target_date.hour >= 22:  # 晚上10点后不能预约当天
+        if target_date.hour >= 22 or (target_date.hour == 21 and target_date.minute >= 30):
             logging.warning("当前时间过晚，自动改为预约明天")
             target_date = target_date + datetime.timedelta(days=1)
         
