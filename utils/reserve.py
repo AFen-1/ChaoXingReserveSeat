@@ -49,7 +49,6 @@ class reserve:
         self.enable_slider = enable_slider
         self.reserve_next_day = reserve_next_day
         self.beijing_tz = pytz.timezone('Asia/Shanghai')
-        self.logged_in = False
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
     def get_target_date(self):
@@ -71,25 +70,6 @@ class reserve:
             target_date = target_date + datetime.timedelta(days=1)
         
         return target_date.strftime("%Y-%m-%d")
-        
-    def wait_until(target_time, action):
-        """等待直到目标时间（北京时间）"""
-        logging.info(f"等待目标时间: {target_time}")
-        target_h, target_m, target_s = map(int, target_time.split(':'))
-    
-        while True:
-            current_time = get_current_time(action)
-            current_h, current_m, current_s = map(int, current_time.split(':'))
-        
-            # 比较当前时间和目标时间
-            if (current_h > target_h or 
-                (current_h == target_h and current_m > target_m) or 
-                (current_h == target_h and current_m == target_m and current_s >= target_s)):
-                logging.info(f"达到目标时间: {current_time}")
-                break
-            
-            logging.info(f"当前时间: {current_time}, 等待目标时间: {target_time}")
-            time.sleep(0.5)  # 每0.5秒检查一次
     
     # login and page token
     def _get_page_token(self, url):
@@ -118,12 +98,10 @@ class reserve:
         obj = jsons.json()
         if obj['status']:
             logging.info(f"User {username} login successfully")
-            self.logged_in = True  # 添加登录状态标记
-            return True
+            return (True, '')
         else:
-            logging.error(f"User {username} login failed! Reason: {obj['msg2']}")  # 改为error级别
-            self.logged_in = False
-            return False
+            logging.info(f"User {username} login failed. Please check you password and username! ")
+            return (False, obj['msg2'])
 
     # extra: get roomid
     def roomid(self, encode):
@@ -235,10 +213,6 @@ class reserve:
         return tl[0]
 
     def submit(self, times, roomid, seatid, action):
-        if not self.logged_in:  # 新增检查
-            logging.error("无法预约：用户未登录！")
-            return False
-
         # 获取正确的目标日期
         day_str = self.get_target_date()
         logging.info(f"预约日期: {day_str}")
