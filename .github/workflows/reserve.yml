@@ -2,10 +2,9 @@ name: auto_Reserve
 
 on:
   schedule:
-    # 北京时间 19:00 运行 (UTC+8)
-    - cron: "30 12 * * *"   # 保持 UTC 时间 11:00（对应北京时间 19:00）
-      timezone: "Asia/Shanghai"  # 显式声明时区
-  workflow_dispatch:  # 保留手动触发功能
+    - cron: "30 12 * * *"
+      timezone: "Asia/Shanghai"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,6 +22,7 @@ jobs:
           python -m pip install --upgrade pip
           sudo apt-get install build-essential libssl-dev libffi-dev python3-dev -y
           pip install cryptography requests opencv-python numpy pytz
+          pip install futures  # 添加并行支持
 
       - name: run script
         env:
