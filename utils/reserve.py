@@ -83,6 +83,8 @@ class reserve:
         self.requests.headers = self.login_headers
         self.requests.get(url=self.login_page, verify=False)
 
+
+    
     def login(self, username, password):
         username = AES_Encrypt(username)
         password = AES_Encrypt(password)
@@ -98,10 +100,11 @@ class reserve:
         obj = jsons.json()
         if obj['status']:
             logging.info(f"User {username} login successfully")
-            return (True, '')
+            return True  # 修改为返回布尔值
         else:
             logging.info(f"User {username} login failed. Please check you password and username! ")
-            return (False, obj['msg2'])
+            return False  # 修改为返回布尔值
+
 
     # extra: get roomid
     def roomid(self, encode):
